@@ -55,7 +55,7 @@ Keep it tight, specific, and practical.
 """
     try:
         response = client.messages.create(
-            model="claude-3-7-sonnet-latest",
+            model="claude-sonnet-4-6",
             max_tokens=800,
             temperature=0.3,
             system=SYSTEM_PROMPT,
