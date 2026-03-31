@@ -76,3 +76,34 @@ if st.button("Generate Account Brief"):
             st.write(result)
     else:
         st.warning("Please enter at least Company and Title.")
+
+def generate_brief():
+    prompt = f"""
+Company: {company}
+Contact: {contact}
+Title: {title}
+Notes: {notes}
+
+Create a concise account brief:
+
+1. What they likely care about
+2. What’s probably broken or at risk
+3. Where Salesforce is likely underperforming
+4. Why this matters to Foundree42
+5. Best angle to engage
+
+Keep it tight, specific, and practical.
+"""
+    try:
+        response = client.messages.create(
+            model="claude-3-7-sonnet-latest",
+            max_tokens=800,
+            temperature=0.3,
+            system=SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        return response.content[0].text
+    except Exception as e:
+        return f"Claude error: {type(e).__name__}"
