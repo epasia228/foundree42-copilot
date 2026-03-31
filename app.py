@@ -1,34 +1,78 @@
 import streamlit as st
+import anthropic
 
-st.set_page_config(page_title="Foundree42 Copilot")
+st.set_page_config(page_title="Foundree42 Copilot", layout="wide")
 
 st.title("Foundree42 Prospecting Copilot")
 
-st.write("Simple prospecting assistant for research + outreach")
+# Load API key
+api_key = st.secrets.get("ANTHROPIC_API_KEY")
+
+if not api_key:
+    st.error("Missing ANTHROPIC_API_KEY in secrets.")
+    st.stop()
+
+client = anthropic.Anthropic(api_key=api_key)
 
 # Inputs
-company = st.text_input("Company Name")
-contact = st.text_input("Contact Name")
+company = st.text_input("Company")
+contact = st.text_input("Contact")
 title = st.text_input("Title")
 notes = st.text_area("Notes (LinkedIn, company info, etc.)")
 
+SYSTEM_PROMPT = """
+You are a senior Salesforce GTM strategist at Foundree42.
+
+You think in terms of:
+- real business problems (not features)
+- process + ownership breakdowns
+- where Salesforce typically underperforms
+- where AI/Agentforce can actually drive outcomes
+
+Style:
+- sharp
+- concise
+- slightly opinionated
+- no generic consulting language
+"""
+
+def generate_brief():
+    prompt = f"""
+Company: {company}
+Contact: {contact}
+Title: {title}
+Notes: {notes}
+
+Create a concise account brief:
+
+1. What they likely care about
+2. What’s probably broken or at risk
+3. Where Salesforce is likely underperforming
+4. Why this matters to Foundree42
+5. Best angle to engage
+
+Keep it tight, specific, and practical.
+"""
+
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=800,
+        temperature=0.3,
+        system=SYSTEM_PROMPT,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.content[0].text
+
+
+# Button
 if st.button("Generate Account Brief"):
     if company and title:
-        st.subheader("Account Brief")
-
-        st.write(f"**Company:** {company}")
-        st.write(f"**Contact:** {contact} ({title})")
-
-        st.markdown("### What they likely care about:")
-        st.write("- Revenue growth and sales performance")
-        st.write("- Pipeline visibility and forecasting accuracy")
-
-        st.markdown("### What’s probably broken:")
-        st.write("- Misalignment between sales process and CRM")
-        st.write("- Low adoption or inconsistent usage")
-
-        st.markdown("### Suggested angle:")
-        st.write("Focus on how their current Salesforce setup may not reflect how the business actually sells.")
-
+        with st.spinner("Thinking..."):
+            result = generate_brief()
+            st.subheader("Account Brief")
+            st.write(result)
     else:
-        st.warning("Please enter at least company and title.")
+        st.warning("Please enter at least Company and Title.")
